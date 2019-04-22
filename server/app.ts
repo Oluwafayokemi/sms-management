@@ -3,8 +3,8 @@
  */
 
 //  Modules
-import express from 'express';
-import bodyParser from 'body-parser';
+import * as express from "express";
+import * as bodyParser from "body-parser";
 // constants
 const app = express();
 const port = process.env.PORT || 8000;

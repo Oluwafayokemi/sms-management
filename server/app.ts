@@ -13,13 +13,13 @@ const {
   PORT,
 } = process.env
 const app = express();
-const port = PORT || "8000";
-
-// support parsing of application/x-www-form-urlencoded post data
-app.use(bodyParser.urlencoded({ extended: false }));
+const port = PORT || 9000;
 
 // support parsing of application/json type post data
 app.use(bodyParser.json());
+// support parsing of application/x-www-form-urlencoded post data
+app.use(bodyParser.urlencoded({ extended: false }));
+
 
 app.get('/', (req, res) => {
   res.status(200).json({ message: 'Here we are in sms management app' });
@@ -29,12 +29,11 @@ app.get('/', (req, res) => {
 Routes.forEach(route => {
   (app as any)[route.method](
     route.route,
-    async (req: Request, res: Response, next: Function ) => {
+    async (req: Request, res: Response, next: Function) => {
       const controller = new route.controller() as any;
       try {
         const result = await controller[route.action](req, res, next)
-
-        if(result && result.writable) return result;
+        if (result && result.writable) return result;
         return res.status(200).json(result)
       } catch (error) {
         return res.status(500).json(`error: ${error}`)

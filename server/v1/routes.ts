@@ -3,14 +3,14 @@ import { UserController } from "./controller/UserController";
 export const Routes = [
   {
     method: 'post',
-    route: '/api/users',
+    route: '/api/auth/signup',
     controller: UserController,
     action: 'save'
   },
   {
-    method: 'get',
-    route: '/api/users',
+    method: 'post',
+    route: '/api/auth/login',
     controller: UserController,
-    action: 'getUser'
+    action: 'getOne'
   }
 ]

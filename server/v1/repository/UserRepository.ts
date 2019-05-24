@@ -5,63 +5,152 @@
 //  Repository
 import { IRepository } from './Repository';
 import { Pool } from 'pg';
+import createLogger from '../winston';
+import { encryptPassword, comparePassword } from '../util';
 
 export type UserId = number;
 
 export class User {
-  id?: UserId;
   first_name: string;
   last_name: string;
   user_name: string;
   phone_number?: number;
   created_at?: Date;
+  email?: string;
+  password?: string;
+  statusCode?: number;
+  message?: string;
 
   constructor(opts: Partial<User>) {
-    this.id = opts.id;
     this.first_name = opts.first_name;
     this.last_name = opts.last_name;
     this.user_name = opts.user_name;
     this.phone_number = opts.phone_number;
     this.created_at = opts.created_at;
+    this.email = opts.email;
+    this.password = opts.password;
   }
 }
 
 export class UserRepository implements IRepository<UserId, User> {
   constructor(public pool: Pool) { }
-  async save(user: Partial<User>): Promise<User> {
+
+  /**
+   * @method userExists
+   * @description method to return friendly error when email, username and phone_number already exist
+   * @param {String} response 
+   */
+  userExists(response = "") {
+    const userKey = (/user_\w+/.exec(response));
+    const replaceReg = /user_|_key/gi
+    throw `${userKey[0].replace(replaceReg, '')} already exist`
+  }
+
+  /**
+   * @method save
+   * @description method to sign up a user
+   * @param {Object} user - first_name: string, last_name: string, user_name: string, phone_number: string, email: string, password: string
+   */
+  async save(user): Promise<User> {
+    const { first_name, last_name, user_name, phone_number, email, password, response } = user
+    const queryString = {
+      text: 'INSERT INTO "user"(first_name, last_name, user_name, phone_number, email, password) VALUES ($1, $2, $3, $4, $5, $6)  RETURNING *;',
+      values: [first_name, last_name, user_name, phone_number, email, encryptPassword(password)],
+    }
     try {
-      const res = await this.pool.query(
-        `
-            INSERT INTO "user" (
-              first_name,
-              last_name,
-              user_name,
-              phone_number
-            ) VALUES ($1, $2, $3, $4)
-            RETURNING *
-          `,
-        [
-          user.first_name,
-          user.last_name,
-          user.user_name,
-          user.phone_number
-        ],
-      );
-      const newUser = new User(res.rows[0]);
-      console.log(`UserRepository.ts @ save(): newUser = ${newUser}`);
-      return newUser;
+      const res = await this.pool.query(queryString);
+      const newUser = new User({
+        first_name: res.rows[0].first_name,
+        last_name: res.rows[0].last_name,
+        user_name: res.rows[0].user_name,
+        phone_number: res.rows[0].phone_number,
+        email: res.rows[0].email
+      });
+      createLogger.log({
+        level: 'info',
+        message: `UserRepository.ts @ save(): newUser = ${newUser}`,
+      });
+      return response.status(201).json({
+        statusCode: 201,
+        message: 'You are successfully signed up',
+        data: newUser
+      })
     } catch (err) {
-      console.log(`UserRepository.ts @ save(): Could not create user >> ${err.message}`);
+      const stringifyError = err.toString();
+      if (stringifyError.includes('duplicate key') && stringifyError.includes('user_')) {
+        this.userExists(stringifyError)
+      }
+      createLogger.log({
+        level: 'info',
+        message: `UserRepository.ts @ save(): Could not create user >> ${
+          err
+          }`,
+      });
       throw `Could not create user (${err})`;
     }
   }
+
+  async get(conditions = {}) {
+    let client;
+    try {
+      client = await this.pool.connect();
+      let q = 'SELECT * FROM "user" WHERE 1 = 1';
+      let val;
+      Object.keys(conditions).forEach(label => {
+        val = conditions[label];
+        val = typeof val === 'string' ? client.escapeLiteral(val) : val;
+        q = q + ` AND ${client.escapeIdentifier(label)} = ${val}`;
+      });
+      const res = await this.pool.query(q);
+      return res.rows.map(user => new User(user));
+    } catch (err) {
+      throw `Could not query Users (${err}), ${JSON.stringify(conditions)}`;
+    } finally {
+      if (client) client.release();
+    }
+  }
+
+  /**
+   * @function getOne
+   * @description logs in a user by email or username
+   * @param {Object} email - user_name: string, email: string, password: string, response: Response
+   */
+  async getOne(user) {
+    const { user_name, email, password, response } = user
+    let result;
+    const credential = user_name ? { user_name } : email ? { email } : ''
+    try {
+      result = await this.get(credential);
+      if (!result[0]) {
+        return {
+          statusCode: 404,
+          message: `The email or username does not exist`,
+        };
+      }
+      const validate_password = comparePassword(password, result[0].password)
+      if (!validate_password) {
+        return {
+          statusCode: 400,
+          message: `Your email/username or password is not valid`,
+        };
+      }
+      return response.status(200).json({
+        statusCode: 200,
+        message: 'User logged in successfully',
+        data: result[0]
+      })
+    } catch (err) {
+      throw `Could not get User (${err})`;
+    }
+  }
+
+
   // TEMPORARY: Seeding DB
   async seed() {
     await this.pool.query(
       `
       INSERT INTO "user" (id, first_name, last_name, phone_number)
       VALUES (1, 'Super', 'Admin', 'superadmin@example.com', 1, 77, 'blue', 'WORKING', 'Superadmin', $1)
-      ON CONFLICT DO NOTHING;
     `,
     );
 

@@ -38,9 +38,9 @@ Enables authenticated user to send and receive sms
 
 ### Get Started
 - $ git clone https://github.com/Oluwafayokemi/sms-management.git
-- $ install sqitch with `brew install sqitch --with-postgres-support`
+- $ install sqitch with ```brew install sqitch --with-postgres-support```
 ### set up database
-- run `createdb sms-management` to create a database for sms-management
+- run ```createdb sms-management``` to create a database for sms-management
 ### Set up Guide
 - cd into the newly cloned folder
 - Go into the project directory:
@@ -48,9 +48,11 @@ Enables authenticated user to send and receive sms
 - copy .env.example file into .env file
 - Copy the url to your database to DATABASEURL in .env
 - on your terminal run
+
 ```
-`sqitch deploy`
-to migrate the tables and columns to your database
+sqitch deploy
+```
+To migrate the tables and columns to your database
 ```
 npm install 
 ```

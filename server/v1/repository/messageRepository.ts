@@ -1,6 +1,3 @@
-/**
- * @file message Repository
- */
 
 import { IMessageRepository } from './Repository';
 import { Pool } from 'pg';
@@ -62,7 +59,7 @@ export class MessageRepository implements IMessageRepository<MessageId, Message>
     const { user_name } = token;
     const queryString = {
       text: 'INSERT INTO "message"(body, to_user, from_user, sms_status) VALUES ($1, $2, $3, $4)  RETURNING *;',
-      values: [body, to_user, user_name, sms_status],
+      values: [body, to_user, user_name, 'unread'],
     }
     try {
       const result = await this.pool.query(queryString);
@@ -159,7 +156,7 @@ export class MessageRepository implements IMessageRepository<MessageId, Message>
       return res.status(404).json({
         status: 404,
         success: 'false',
-        message: 'The message you have chosen does not exist',
+       message: 'The message you have chosen does not exist',
       });
     }
     return res.json()({

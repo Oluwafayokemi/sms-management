@@ -5,7 +5,7 @@
 //  Modules
 import * as express from "express";
 import * as bodyParser from "body-parser";
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { Routes } from "./v1/routes";
 import authenticate from "./v1/middleware/validation/authenticate";
 
@@ -27,9 +27,9 @@ app.get('/', (req, res) => {
   res.status(200).json({ message: 'Here we are in sms management app' });
 });
 
-app.use('*', (req, res, next) => {
+app.use('*', async (req, res, next) => {
   if (req.baseUrl.includes('/api/message')) {
-    authenticate(req, res, next)  
+    await authenticate(req, res, next)
   }
 })
 
@@ -37,8 +37,8 @@ app.use('*', (req, res, next) => {
 Routes.forEach(route => {
   (app as any)[route.method](
     route.route,
-
     async (req: Request, res: Response, next: Function) => {
+      // await authenticationMiddleWare(route.route, req, res, next)
       const controller = new route.controller() as any;
       try {
         const result = await controller[route.action](req, res, next)

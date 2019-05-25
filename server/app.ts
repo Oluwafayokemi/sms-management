@@ -38,7 +38,6 @@ Routes.forEach(route => {
   (app as any)[route.method](
     route.route,
     async (req: Request, res: Response, next: Function) => {
-      // await authenticationMiddleWare(route.route, req, res, next)
       const controller = new route.controller() as any;
       try {
         const result = await controller[route.action](req, res, next)

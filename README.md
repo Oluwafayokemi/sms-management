@@ -37,8 +37,8 @@ Enables authenticated user to send and receive sms
 - Bcrypt for hashing password
 
 ### Get Started
-$ git clone https://github.com/Oluwafayokemi/sms-management.git
-$ install sqitch with `brew install sqitch --with-postgres-support`
+- $ git clone https://github.com/Oluwafayokemi/sms-management.git
+- $ install sqitch with `brew install sqitch --with-postgres-support`
 ### set up database
 - run `createdb sms-management` to create a database for sms-management
 ### Set up Guide

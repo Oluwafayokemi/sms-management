@@ -7,3 +7,4 @@ user_add_phone 2019-05-23T15:55:32Z Fayokemi <fayoaright@gmail.com> # Update use
 user_create_unique_index 2019-05-23T18:07:34Z Fayokemi <fayoaright@gmail.com> # Create unique index on users
 user_add_constraint_to_user_name 2019-05-24T22:34:32Z Fayokemi <fayoaright@gmail.com> # add primary key constraint to user_name
 message_update_schema 2019-05-24T23:07:00Z Fayokemi <fayoaright@gmail.com> # update to_user and from_user to text data type
+message_update_sms_status_type 2019-05-25T18:21:28Z Fayokemi <fayoaright@gmail.com> # update sms data type to text

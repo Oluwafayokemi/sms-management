@@ -1,7 +1,12 @@
 import logger from './winston';
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import * as dotenv from "dotenv";
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+
+dotenv.config();
+
+const secret = process.env.SECRET_KEY;
 
 export interface iError {
   friendlyErrorMessage: string;
@@ -48,7 +53,7 @@ export const comparePassword = (password: string, hash: string) => {
  * @returns {string} the signed jwt token
  */
 export const createToken = (payload) => {
-  return jwt.sign(payload, 'secret',
+  return jwt.sign(payload, secret,
     { expiresIn: '1d' },
   )
 }
@@ -60,7 +65,7 @@ export const createToken = (payload) => {
  * @return {object} the decoded token payload
  */
 export const verifyToken = (token) => {
-  return jwt.verify(token, 'secret', (err, decoded) => {
+  return jwt.verify(token, secret, (err, decoded) => {
     if (decoded) {
       return decoded;
     }

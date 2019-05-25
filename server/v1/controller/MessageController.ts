@@ -2,16 +2,32 @@
  * @file Message Controller
  */
 
+//  Modules
 import { NextFunction, Request, Response } from 'express';
-import { MessageRepository, Message } from '../repository/MessageRepository';
 import { pool } from '../models';
+// Interface
+import { MessageRepository, Message } from '../repository/MessageRepository';
+// utils
 import { sendCustomError } from '../util';
+// Validation
 import validateRequest from '../middleware/validation';
 import MessageValidator from '../middleware/validation/messageValidator';
-import authenticate from '../middleware/validation/authenticate';
 
+/**
+ * @class MessageController
+ * @description handles endpoint to POST, GET, DELETE and UPDATE messages
+ * @returns {ReactElement}
+ */
 export class MessageController {
   private repo = new MessageRepository(pool);
+
+  /**
+   * @method save
+   * @description create messages
+   * @param request - function
+   * @param response - function
+   * @param next - function
+   */
   async save(request, response: Response, next: NextFunction) {
     try {
       const newMessage = new Message(request.body);
@@ -27,6 +43,13 @@ export class MessageController {
     }
   }
 
+  /**
+   * @method getAll
+   * @description get list of all messages
+   * @param request 
+   * @param response 
+   * @param next 
+   */
   async getAll(request: Request, response: Response, next: NextFunction) {
     try {
       response.status(200);
@@ -35,6 +58,14 @@ export class MessageController {
       throw `Could not get User (${err})`;
     }
   }
+
+  /**
+   * @method getOne
+   * @description get a message belonging to the id in the param request
+   * @param request 
+   * @param response 
+   * @param next 
+   */
   async getOne(request: Request, response: Response, next: NextFunction) {
     try {
       response.status(200);
@@ -43,6 +74,14 @@ export class MessageController {
       throw `Could not get User (${err})`;
     }
   }
+
+  /**
+   * @method delete
+   * @description delete a message belongin to the id in the param request
+   * @param request 
+   * @param response 
+   * @param next 
+   */
   async delete(request: Request, response: Response, next: NextFunction) {
     try {
       response.status(204);

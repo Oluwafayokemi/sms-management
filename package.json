@@ -25,6 +25,7 @@
     "class-validator": "^0.9.1",
     "dotenv": "^7.0.0",
     "express": "^4.16.4",
+    "jsonwebtoken": "^8.5.1",
     "pg": "^7.10.0",
     "typestyle": "^2.0.2",
     "winston": "^3.2.1",

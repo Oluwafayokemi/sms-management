@@ -1,6 +1,6 @@
 import logger from './winston';
-import { User } from './repository/UserRepository';
 import { Request, Response } from 'express';
+const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
 export interface iError {
@@ -38,4 +38,32 @@ export const encryptPassword = (password = '') => {
 export const comparePassword = (password: string, hash: string) => {
   const isValidPassword = bcrypt.compareSync(password.trim(), hash)
   return isValidPassword;
+}
+
+/**
+ * @function createToken
+ * @description This method takes a payload and a duration for which the token is expected to be valid and signs a jwt token.
+ * @param {object} payload contains the user information to be signed into the token
+ * @param {number} expiresIn the validity period of the token
+ * @returns {string} the signed jwt token
+ */
+export const createToken = (payload) => {
+  return jwt.sign(payload, 'secret',
+    { expiresIn: '1d' },
+  )
+}
+
+/**
+ * @function verifyToken
+ * @description This method takes a token and returns the decoded payload.
+ * @param {object} token the jwt token
+ * @return {object} the decoded token payload
+ */
+export const verifyToken = (token) => {
+  return jwt.verify(token, 'secret', (err, decoded) => {
+    if (decoded) {
+      return decoded;
+    }
+    return err.message;
+  });
 }

@@ -3,14 +3,20 @@
  */
 
 //  Repository
-import { IRepository } from './Repository';
+import { IUserRepository } from './Repository';
 import { Pool } from 'pg';
 import createLogger from '../winston';
-import { encryptPassword, comparePassword } from '../util';
+import { encryptPassword, comparePassword, createToken } from '../util';
+import { Response } from 'express';
+import { jwt } from 'jsonwebToken';
 
 export type UserId = number;
-
+export type Status = {
+  statusCode: number,
+  message: string
+}
 export class User {
+  id: UserId;
   first_name: string;
   last_name: string;
   user_name: string;
@@ -22,6 +28,7 @@ export class User {
   message?: string;
 
   constructor(opts: Partial<User>) {
+    this.id = opts.id;
     this.first_name = opts.first_name;
     this.last_name = opts.last_name;
     this.user_name = opts.user_name;
@@ -32,7 +39,7 @@ export class User {
   }
 }
 
-export class UserRepository implements IRepository<UserId, User> {
+export class UserRepository implements IUserRepository<UserId, User> {
   constructor(public pool: Pool) { }
 
   /**
@@ -40,10 +47,47 @@ export class UserRepository implements IRepository<UserId, User> {
    * @description method to return friendly error when email, username and phone_number already exist
    * @param {String} response 
    */
-  userExists(response = "") {
-    const userKey = (/user_\w+/.exec(response));
-    const replaceReg = /user_|_key/gi
-    throw `${userKey[0].replace(replaceReg, '')} already exist`
+  userExists(err: string) {
+    const stringifyError = err.toString();
+    if (stringifyError.includes('duplicate key') && stringifyError.includes('user_')) {
+      const userKey = (/user_\w+/.exec(stringifyError));
+      const replaceReg = /user_|_key/gi
+      throw `${userKey[0].replace(replaceReg, '')} already exist`
+    }
+  }
+
+  /**
+   * @method successResponse
+   * @param user 
+   */
+  async successResponse(user: User, res, status: Status) {
+    const { first_name, last_name, user_name, phone_number, email } = user;
+    const decodeCredentials = {
+      token: {
+        user_name,
+        email,
+        phone_number
+      }
+    }
+    const token = await createToken(decodeCredentials)
+    const { statusCode, message } = status
+    const newUser = new User({
+      first_name,
+      last_name,
+      user_name,
+      phone_number,
+      email
+    });
+    createLogger.log({
+      level: 'info',
+      message: `UserRepository.ts @ save(): newUser = ${newUser}`,
+    });
+    return res.status(statusCode).json({
+      statusCode: `${statusCode}`,
+      message,
+      data: newUser,
+      token
+    })
   }
 
   /**
@@ -59,27 +103,13 @@ export class UserRepository implements IRepository<UserId, User> {
     }
     try {
       const res = await this.pool.query(queryString);
-      const newUser = new User({
-        first_name: res.rows[0].first_name,
-        last_name: res.rows[0].last_name,
-        user_name: res.rows[0].user_name,
-        phone_number: res.rows[0].phone_number,
-        email: res.rows[0].email
-      });
-      createLogger.log({
-        level: 'info',
-        message: `UserRepository.ts @ save(): newUser = ${newUser}`,
-      });
-      return response.status(201).json({
+      const status = {
         statusCode: 201,
-        message: 'You are successfully signed up',
-        data: newUser
-      })
-    } catch (err) {
-      const stringifyError = err.toString();
-      if (stringifyError.includes('duplicate key') && stringifyError.includes('user_')) {
-        this.userExists(stringifyError)
+        message: 'Sign up successful'
       }
+      return this.successResponse(res.rows[0], response, status)
+    } catch (err) {
+      this.userExists(err);
       createLogger.log({
         level: 'info',
         message: `UserRepository.ts @ save(): Could not create user >> ${
@@ -134,30 +164,14 @@ export class UserRepository implements IRepository<UserId, User> {
           message: `Your email/username or password is not valid`,
         };
       }
-      return response.status(200).json({
+      const status = {
         statusCode: 200,
         message: 'User logged in successfully',
-        data: result[0]
-      })
+      }
+      return this.successResponse(result[0], response, status)
     } catch (err) {
       throw `Could not get User (${err})`;
     }
-  }
-
-
-  // TEMPORARY: Seeding DB
-  async seed() {
-    await this.pool.query(
-      `
-      INSERT INTO "user" (id, first_name, last_name, phone_number)
-      VALUES (1, 'Super', 'Admin', 'superadmin@example.com', 1, 77, 'blue', 'WORKING', 'Superadmin', $1)
-    `,
-    );
-
-    // advance the auto-incrementing sequence by one. This avoids the
-    // problem that the next (very first!) User to be added will clash
-    // with the existing seeded value.
-    await this.pool.query(`SELECT nextval('user_id_seq');`);
   }
 
 }

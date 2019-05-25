@@ -6,7 +6,7 @@ import {
     IsNumberString,
   } from 'class-validator';
   
-  class UserValidator {
+  class SignUpValidator {
     @IsDefined()
     @IsString()
     @MinLength(3)
@@ -36,5 +36,5 @@ import {
 
   }
   
-  export default UserValidator;
+  export default SignUpValidator;
   

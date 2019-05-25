@@ -7,6 +7,8 @@ import * as express from "express";
 import * as bodyParser from "body-parser";
 import { Request, Response } from 'express';
 import { Routes } from "./v1/routes";
+import authenticate from "./v1/middleware/validation/authenticate";
+
 
 // constants
 const {
@@ -23,12 +25,19 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 app.get('/', (req, res) => {
   res.status(200).json({ message: 'Here we are in sms management app' });
+});
+
+app.use('*', (req, res, next) => {
+  if (req.baseUrl.includes('/api/message')) {
+    authenticate(req, res, next)  
+  }
 })
 
 // Routes
 Routes.forEach(route => {
   (app as any)[route.method](
     route.route,
+
     async (req: Request, res: Response, next: Function) => {
       const controller = new route.controller() as any;
       try {

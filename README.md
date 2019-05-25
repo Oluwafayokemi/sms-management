@@ -67,9 +67,9 @@ On your browser navigate to localhost:9000
 ### For Api Documentation
 API Routes Endpoints
 For Requests
-- POST '/api/v1/auth/signup' Sign up as a new user
-- POST '/api/v1/auth/login' Login as an existing user
-- POST '/api/v1/message' Create a message
-- GET '/api/v1/message' Fetch all the message created and sent
-- GET '/api/v1/message/:id'  Fetch a message that belongs to a logged in user
-- DELETE '/api/v1/message/:id' Delete a request
+- POST '/api/auth/signup' Sign up as a new user
+- POST '/api/auth/login' Login as an existing user
+- POST '/api/message' Create a message
+- GET '/api/message' Fetch all the message created and sent
+- GET '/api//message/:id'  Fetch a message that belongs to a logged in user
+- DELETE '/api/message/:id' Delete a request
